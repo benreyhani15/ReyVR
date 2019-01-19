@@ -1,0 +1,18 @@
+﻿<Properties StartupConfiguration="{B93DE4CC-F486-B6A2-387A-CC73613D824F}|">
+  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="Unity.Editor" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/NoFeedbackView.cs">
+    <Files>
+      <File FileName="Assets/Scripts/NoFeedbackView.cs" Line="29" Column="6" />
+      <File FileName="Assets/Scripts/NoFeedbackStateMachine.cs" Line="27" Column="5" />
+      <File FileName="Assets/Scripts/TaskController.cs" Line="19" Column="1" />
+      <File FileName="Assets/Scripts/Constants.cs" Line="9" Column="2" />
+      <File FileName="Assets/Scripts/BCILogger.cs" Line="11" Column="33" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MultiItemStartupConfigurations />
+</Properties>

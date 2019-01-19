@@ -1,0 +1,30 @@
+- 0: right, 1:feet, 2: left
+- Initial Delay (Blank Screen:-1), Cross: -2 (1s) , MI:0,1 or 2 (4.5s) , Relax/BlankScreen:-1 (4s)
+- 9 electrodes: FC3, FCz, FC4, C3, Cz, C4, CP3, CPz, CP4
+
+
+1. Dark Room, no VR:
+
+a) Idle EEG Signals (1 minute)
+
+b) ME: 10x3 (~5 minutes)
+
+c) MI: 10x3 (~5 minutes)
+
+
+2. VR Dark Room:
+
+a) Idle EEG Signals (1 minute)
+
+b) ME: 10x3 (~5 minutes)
+
+c) MI: 10x3 (~5 minutes)
+
+
+3. VR Forest:
+
+a) Idle EEG Signals (1 minute)
+
+b) ME: 10x3 (~5 minutes)
+
+c) MI: 10x3 (~5 minutes)
