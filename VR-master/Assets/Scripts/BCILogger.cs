@@ -1,17 +1,22 @@
 ﻿using System;
 using System.IO;
 
-public class BCILogger {
+public class BCILogger
+{
     private String markersFile;
     private String timeFile;
 
-    public BCILogger(String markersPath, String timePath) {
+    public BCILogger(String markersPath, String timePath)
+    {
         markersFile = markersPath;
         timeFile = timePath;
+        UnityEngine.Debug.Log(markersFile);
     }
 
-    public void appendToTextFile(String marker, String timeMS) {
-        using (StreamWriter sw = new StreamWriter(markersFile, true)) {
+    public void appendToTextFile(String marker, String timeMS)
+    {
+        using (StreamWriter sw = new StreamWriter(markersFile, true))
+        {
             sw.WriteLine(marker);
         }
 
@@ -19,5 +24,10 @@ public class BCILogger {
         {
             sw.WriteLine(timeMS);
         }
+    }
+
+    private Boolean sendMarkers(int marker) {
+        // TODO: Connect to whatever medium to send markers to EEG computer
+        return true;
     }
 }

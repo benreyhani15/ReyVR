@@ -1,0 +1,20 @@
+﻿<Properties StartupConfiguration="{9DEF17E0-5280-F189-5ECA-516D5FA065A8}|">
+  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="Unity.Editor" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/PlayerMovementView.cs">
+    <Files>
+      <File FileName="Assets/Scripts/BCILogger.cs" Line="24" Column="10" />
+      <File FileName="Assets/Scripts/Constants.cs" Line="12" Column="3" />
+      <File FileName="Assets/Scripts/NoFeedbackView.cs" Line="19" Column="32" />
+      <File FileName="Assets/Scripts/NoFeedbackStateMachine.cs" Line="42" Column="52" />
+      <File FileName="Assets/Scripts/TaskController.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/MovementStateMachine.cs" Line="36" Column="80" />
+      <File FileName="Assets/Scripts/PlayerMovementView.cs" Line="156" Column="48" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MultiItemStartupConfigurations />
+</Properties>

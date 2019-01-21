@@ -38,7 +38,6 @@ public class NoFeedbackStateMachine
         ui = view;
         taskController = new TaskController();
         string date = System.DateTime.Now.ToString("MM-dd-yyyy");
-
         logger = new BCILogger("Logs/"+date+"/ben_1_test_markers.txt"
             , "Logs/"+date+"/ben_1_test_time.txt");
         firstUpdate = true;
