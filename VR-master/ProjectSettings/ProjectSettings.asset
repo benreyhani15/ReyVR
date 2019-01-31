@@ -670,7 +670,7 @@ PlayerSettings:
   facebookSdkVersion: 7.9.1
   apiCompatibilityLevel: 2
   cloudProjectId: 308ada30-02f4-45c0-886a-4e3a129a6786
-  projectName: 
+  projectName: VR-BCITraining
   organizationId: benreyhani15
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0

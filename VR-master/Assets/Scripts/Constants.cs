@@ -7,7 +7,4 @@ public class Constants
     public static float BLANK_SCREEN_SECONDS = 1f;
     public static float PREP_CROSS_SECONDS = 1f;
     public static float INITIAL_DELAY_SECONDS = 2f;
-
-    // 2) For Feedback training sessions
-  
 }

@@ -84,20 +84,19 @@
     <Compile Include="Assets\Oculus\AudioManager\Scripts\Utils\Editor\DrawerInspectorNote.cs" />
     <Compile Include="Assets\Oculus\Avatar\Editor\AvatarMaterialEditor.cs" />
     <Compile Include="Assets\Oculus\LipSync\Editor\OVRLipSyncTool.cs" />
+    <Compile Include="Assets\Oculus\LipSync\Editor\OVRNamedArrayPropertyDrawer.cs" />
     <Compile Include="Assets\Oculus\Platform\Editor\GUIHelper.cs" />
     <Compile Include="Assets\Oculus\Platform\Editor\OculusPlatformSettingsEditor.cs" />
+    <Compile Include="Assets\Oculus\Platform\Editor\OculusPluginUpdaterStub.cs" />
+    <Compile Include="Assets\Oculus\Platform\Editor\OculusStandalonePlatformResponse.cs" />
+    <Compile Include="Assets\Oculus\SampleFramework\Core\Locomotion\Scripts\Editor\TeleportTransitionWarpInspector.cs" />
+    <Compile Include="Assets\Oculus\SampleFramework\Editor\BuildAssetPackages.cs" />
+    <Compile Include="Assets\Oculus\SampleFramework\Editor\OculusSampleFrameworkUtil.cs" />
     <Compile Include="Assets\Oculus\Spatializer\Editor\ONSPAudioSourceEditor.cs" />
     <Compile Include="Assets\Oculus\Spatializer\Editor\ONSPReflectionCustomGUI.cs" />
-    <Compile Include="Assets\Oculus\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
-    <Compile Include="Assets\Oculus\VR\Editor\OVRBuild.cs" />
-    <Compile Include="Assets\Oculus\VR\Editor\OVREngineConfigurationUpdater.cs" />
-    <Compile Include="Assets\Oculus\VR\Editor\OVRLayerAttributeEditor.cs" />
-    <Compile Include="Assets\Oculus\VR\Editor\OVRManifestPreprocessor.cs" />
-    <Compile Include="Assets\Oculus\VR\Editor\OVRPluginUpdater.cs" />
-    <Compile Include="Assets\Oculus\VR\Editor\OVRPluginUpdaterStub.cs" />
-    <Compile Include="Assets\Oculus\VR\Editor\OVRScreenshotWizard.cs" />
-    <Compile Include="Assets\Oculus\VR\Scripts\Editor\OVRManagerEditor.cs" />
-    <None Include="Assets\Oculus\VR\Editor\AndroidManifest.OVRSubmission.xml" />
+    <Reference Include="Assembly-UnityScript">
+      <HintPath>/Users/benreyhani/Files/Unity/ReyVR/ReyVR/VR-master/Library/ScriptAssemblies/Assembly-UnityScript.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>/Users/benreyhani/Files/Unity/ReyVR/ReyVR/VR-master/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>
@@ -394,6 +393,18 @@
     <ProjectReference Include="Assembly-CSharp.csproj">
       <Project>{9DEF17E0-5280-F189-5ECA-516D5FA065A8}</Project>
       <Name>Assembly-CSharp</Name>
+    </ProjectReference>
+    <ProjectReference Include="Oculus.VR.Editor.csproj">
+      <Project>{99149352-1213-5566-195F-CC0B8140CBE7}</Project>
+      <Name>Oculus.VR.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="Oculus.VR.Scripts.Editor.csproj">
+      <Project>{2754A282-1D48-B7A4-083B-B180A9CCCCCE}</Project>
+      <Name>Oculus.VR.Scripts.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="Oculus.VR.csproj">
+      <Project>{951F95D1-4BCF-2FB4-B224-60DF9116EFAE}</Project>
+      <Name>Oculus.VR</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
