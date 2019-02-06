@@ -17,13 +17,28 @@ public class NoFeedbackStateMachine
 
     public static bool IS_DEBUG_MODE = true;
 
-    //public static int IDLE_MARKER = 0;
-    public static int RIGHT_MARKER = 0;
-    public static int FORWARD_MARKER = 1;
-    public static int LEFT_MARKER = 2;
-    public static int BLANK_SCREEN_MARKER = -1;
-    public static int CROSS_MARKER = -2;
-    public static int END_MARKER = -3;
+    public static int START_OF_RIGHT_TASK = 0;
+    public static int START_OF_FORWARD_TASK = 1;
+    public static int START_OF_LEFT_TASK = 2;
+    public static int START_OF_REST_TASK = 3;
+    public static int START_OF_TRIAL = 4;
+    public static int END_OF_TRIAL = 5;
+    public static int START_OF_RUN = 6;
+    public static int END_OF_RUN = 7; // Coincides with next START_OF_RUN (not written)
+    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON = 8;
+    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF = 9;
+    public static int EXCESSIVE_EOG_ON = 15;
+    public static int EXCESSIVE_EOG_OFF = 16;
+    public static int EXCESSIVE_MMG_ON = 17;
+    public static int EXCESSIVE_MMG_OFF = 18;
+
+    private bool isMMGExcessive;
+    private bool isEOGExcessive;
+
+    private OculusMovementDetector oculusMovementDetector;
+    private bool isOculusExcessivelyMoving;
+
+    private bool isTrialDone;
 
     // Each session consists of PrepCross --> Icon --> BlankScreen
     public enum TrialState
@@ -33,14 +48,15 @@ public class NoFeedbackStateMachine
         BlankScreen
     };
 
-    public NoFeedbackStateMachine(NoFeedbackView view)
+    public NoFeedbackStateMachine(NoFeedbackView view, string participantName, int trialNumber, Transform eyeCamera)
     {
         ui = view;
         taskController = new TaskController();
         string date = System.DateTime.Now.ToString("MM-dd-yyyy");
-        logger = new BCILogger("Logs/"+date+"/ben_1_test_markers.txt"
-            , "Logs/"+date+"/ben_1_test_time.txt");
+        logger = new BCILogger(participantName, "Calibration", trialNumber, false);
         firstUpdate = true;
+        oculusMovementDetector = new OculusMovementDetector(eyeCamera);
+        isOculusExcessivelyMoving = false;
     }
 
     public bool isSessionStarted() {
@@ -49,6 +65,7 @@ public class NoFeedbackStateMachine
 
     public void update()
     {
+        if (isTrialDone) return;
         // Update state machine and update UI 
         updateState();
 
@@ -56,8 +73,10 @@ public class NoFeedbackStateMachine
             taskController.taskCount == Constants.NUMBER_OF_CLASSES * Constants.TRIALS_PER_CLASS_PER_SESSION)
         {
             // Session is over
-            logger.appendToTextFile(END_MARKER.ToString(), stopWatch.ElapsedMilliseconds.ToString());
-            stopWatch.Stop();
+            logger.logMarkers(END_OF_TRIAL, stopWatch.ElapsedMilliseconds.ToString());
+        
+            stopWatch.Reset();
+            isTrialDone = true;
             ui.sessionOver();
         }
         else {
@@ -77,20 +96,20 @@ public class NoFeedbackStateMachine
             ui.arrow.SetActive(false);
             ui.relax.SetActive(false);
             ui.cross.SetActive(false);
-            logger.appendToTextFile(BLANK_SCREEN_MARKER.ToString(), firstUpdate ? "0" : stopWatch.ElapsedMilliseconds.ToString());
+            logger.logMarkers(START_OF_REST_TASK, stopWatch.ElapsedMilliseconds.ToString());
             UnityEngine.Debug.Log("Blank Screen");
         } else if (currentTrialState == TrialState.Icon) {
             TaskController.TrialTask task = taskController.generateTaskRandomly();
             ui.cross.SetActive(false);
             ui.setTaskIcon(task);
-            logger.appendToTextFile(((int)task).ToString(), stopWatch.ElapsedMilliseconds.ToString());
+            logger.logMarkers((int)task, stopWatch.ElapsedMilliseconds.ToString());
             UnityEngine.Debug.Log(task.ToString());
         }
         else {
             ui.arrow.SetActive(false);
             ui.relax.SetActive(false);
             ui.cross.SetActive(true);
-            logger.appendToTextFile(CROSS_MARKER.ToString(), stopWatch.ElapsedMilliseconds.ToString());
+            logger.logMarkers(START_OF_RUN, stopWatch.ElapsedMilliseconds.ToString());
             UnityEngine.Debug.Log("Cross");
         }
     }
@@ -99,6 +118,8 @@ public class NoFeedbackStateMachine
         sessionStarted = true;
         stopWatch = new Stopwatch();
         stopWatch.Start();
+        logger.logMarkers(START_OF_TRIAL, "0");
+        oculusMovementDetector.startDetector();
     }
 
     private void launchCoroutine()
@@ -121,9 +142,57 @@ public class NoFeedbackStateMachine
         }
     }
 
+    public void updateExternalBuffers() {
+        readOculusExcessivelyMoving();
+        readArtifactBuffer();
+    }
+
     IEnumerator StayIdle(float secondsIdle)
     {
         yield return new WaitForSeconds(secondsIdle);
         isLocked = false;
+    }
+
+    private void readOculusExcessivelyMoving()
+    {
+        bool newValue = oculusMovementDetector.updateDetector();
+        if (newValue != isOculusExcessivelyMoving)
+        {
+            isOculusExcessivelyMoving = newValue;
+            logger.logMarkers(isOculusExcessivelyMoving ? PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON : PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF
+              , stopWatch.ElapsedMilliseconds.ToString());
+        }
+    }
+
+    private void readArtifactBuffer()
+    {
+        bool newMMG = getMMGExcessive();
+        if (newMMG != isMMGExcessive)
+        {
+            isMMGExcessive = newMMG;
+            logger.logMarkers(isMMGExcessive ? PlayerMovementView.EXCESSIVE_MMG_ON : PlayerMovementView.EXCESSIVE_MMG_OFF, stopWatch.ElapsedMilliseconds.ToString());
+        }
+
+        bool newEOG = getEOGExcessive();
+        if (newEOG != isEOGExcessive)
+        {
+            isEOGExcessive = newEOG;
+            logger.logMarkers(isEOGExcessive ? PlayerMovementView.EXCESSIVE_EOG_ON : PlayerMovementView.EXCESSIVE_EOG_OFF, stopWatch.ElapsedMilliseconds.ToString());
+        }
+    }
+
+    private bool getMMGExcessive()
+    {
+        return false;
+    }
+
+    private bool getEOGExcessive()
+    {
+        return false;
+    }
+
+    public bool isExcessiveBodyMovement()
+    {
+        return isOculusExcessivelyMoving || isEOGExcessive || isMMGExcessive;
     }
 }

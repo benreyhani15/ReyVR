@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio for Mac
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VR-master", "Assembly-CSharp.csproj", "{9DEF17E0-5280-F189-5ECA-516D5FA065A8}"
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{9DEF17E0-5280-F189-5ECA-516D5FA065A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VR-master", "Oculus.VR.csproj", "{951F95D1-4BCF-2FB4-B224-60DF9116EFAE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oculus.VR", "Oculus.VR.csproj", "{951F95D1-4BCF-2FB4-B224-60DF9116EFAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VR-master", "Assembly-CSharp-Editor.csproj", "{EBDF4EBE-ED75-FC6A-50D7-B61C91B7B8C3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{EBDF4EBE-ED75-FC6A-50D7-B61C91B7B8C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VR-master", "Oculus.VR.Scripts.Editor.csproj", "{2754A282-1D48-B7A4-083B-B180A9CCCCCE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oculus.VR.Scripts.Editor", "Oculus.VR.Scripts.Editor.csproj", "{2754A282-1D48-B7A4-083B-B180A9CCCCCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VR-master", "Oculus.VR.Editor.csproj", "{99149352-1213-5566-195F-CC0B8140CBE7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oculus.VR.Editor", "Oculus.VR.Editor.csproj", "{99149352-1213-5566-195F-CC0B8140CBE7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

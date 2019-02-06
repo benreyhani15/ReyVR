@@ -104,7 +104,7 @@ public class OVRCameraRig : MonoBehaviour
 	protected Camera _centerEyeCamera;
 	protected Camera _leftEyeCamera;
 	protected Camera _rightEyeCamera;
-
+    public UnityEngine.UI.Text screenTextUI;
 #region Unity Messages
 	protected virtual void Awake()
 	{
@@ -129,7 +129,16 @@ public class OVRCameraRig : MonoBehaviour
 
 		if (!useFixedUpdateForTracking)
 			UpdateAnchors();
-	}
+
+        if (screenTextUI != null) {
+            double x = Math.Round(centerEyeAnchor.rotation.x*100, 2);
+            double y = Math.Round(centerEyeAnchor.rotation.y*100, 2);
+            double z = Math.Round(centerEyeAnchor.rotation.z*100, 2);
+            screenTextUI.text = "X: " + x + "; Y: " + y + "; Z:" + z;
+        }
+
+    }
+
 #endregion
 
 	protected virtual void UpdateAnchors()

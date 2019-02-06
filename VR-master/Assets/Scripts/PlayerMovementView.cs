@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Diagnostics;
 
 public class PlayerMovementView : MonoBehaviour {
-    private static float MAX_COMPLETION_TIME = 300f; // 5 mins, max time user can attempt to free-roam
+    private static float MAX_COMPLETION_TIME = 10000000000000000000; // 5 mins, max time user can attempt to free-roam
     private static float METRES_PER_TELEPORT = 5f;
 
     public static float MAX_HAND_TASK_TIME = 20f;
@@ -12,8 +12,9 @@ public class PlayerMovementView : MonoBehaviour {
     public static float MAX_REST_TASK_TIME = 20f;
 
     // Amount of time to turn off BCI at beggining of new task
-    public static float BCI_OFF_TIME_BETWEEN_STATE_CHANGE = 0f;
-    public static float INITIAL_BCI_OFF_TIME = 5f;
+    public static float BCI_OFF_TIME_BETWEEN_STATE_CHANGE = 1f;
+    public static float BCI_OFF_TIME_AFTER_OCULUS_MOVEMENT = 1f;
+    public static float INITIAL_BCI_OFF_TIME = 2f;
 
     private float currentTaskElapsedTime;
     private float currentTaskMaxTime;
@@ -31,7 +32,7 @@ public class PlayerMovementView : MonoBehaviour {
     public static float REST_BAR_CHECKPOINT = 5f; // 
     public static float ROTATION_ANGLE_CHECKPOINT = 90f; // 90 degrees
     public static float BALL_DISTANCE_CHECKPOINT = 5f; // 5m 
-    public static float STRENGTH_DISTANCE_CHECKPOINT = 3f;
+    public static float STRENGTH_DISTANCE_CHECKPOINT = 5f;
 
     public static int START_OF_RIGHT_TASK = 0;
     public static int START_OF_FORWARD_TASK = 1;
@@ -58,13 +59,13 @@ public class PlayerMovementView : MonoBehaviour {
     public float originalVRTeleporterStrength;
 
     private bool taskCompleted;
-    public static bool IS_TRAINING_SESSION = true;
+    public bool IS_TRAINING_SESSION = false;
 
     UnityEngine.UI.Slider progressSlider;
 
     MovementStateMachine movementStateMachine;
     private int currentMovementLabel;
-    private Transform playerTransform;
+    public Transform playerTransform;
 
     public VRTeleporter vrTeleporter;
     private static bool USE_BALL = false;
@@ -79,6 +80,12 @@ public class PlayerMovementView : MonoBehaviour {
 
     private Stopwatch totalStopWatch;
     private Stopwatch classificationStopWatch;
+    public Transform eyeCameraTransform;
+
+    public UnityEngine.GameObject alertUI;
+    public bool showAlertUI = true; 
+
+    private static Vector3[] MAZE_STARTING_SPOTS = { new Vector3(169.22f, 0f, 133f) };
 
 	// Use this for initialization
 	void Start () {
@@ -93,18 +100,23 @@ public class PlayerMovementView : MonoBehaviour {
         totalElapsedTime = 0;
 
         progressSlider = restSlider.GetComponentInChildren<UnityEngine.UI.Slider>();
-        playerTransform = GetComponent<Transform>();
         currentMovementLabel = MovementStateMachine.REST;
-        logger = new BCILogger(participantName, trialNumber, true);
+        string logFilePrefix = IS_TRAINING_SESSION ? "Train" : "Test";
+        logger = new BCILogger(participantName, logFilePrefix, trialNumber, true);
         logger.logMarkers(START_OF_TRIAL, "0");
-        movementStateMachine = new MovementStateMachine(this);
+        movementStateMachine = new MovementStateMachine(this, eyeCameraTransform);
         totalStopWatch = new Stopwatch();
         totalStopWatch.Start();
         classificationStopWatch = new Stopwatch();
-	}
-	
-	// Update is called once per frame
-	void Update () {
+        UnityEngine.Debug.Log("Finished START");
+        playerTransform.position = MAZE_STARTING_SPOTS[trialNumber % MAZE_STARTING_SPOTS.Length];
+        alertUI.SetActive(showAlertUI);
+        temporarilyTurnBCIOff(INITIAL_BCI_OFF_TIME);
+    }
+
+    // Update is called once per frame
+    void Update () {
+        if (movementStateMachine == null) UnityEngine.Debug.Log("MSM is null");
         movementStateMachine.updateStateMachine();
         updateUI(Time.deltaTime);
 	}
@@ -135,8 +147,16 @@ public class PlayerMovementView : MonoBehaviour {
         currentTaskElapsedTime = 0f;
     }
 
+    private void updateAlertUI()
+    {
+        if (alertUI != null)
+        {
+            alertUI.GetComponent<Renderer>().material.color = movementStateMachine.isExcessiveBodyMovement()? Color.red : Color.green;
+        }
+    }
+
     private void updateUI(float deltaTime){
-        
+
         //UnityEngine.Debug.Log("current task elapsed time : " + currentTaskElapsedTime + "\n Current task max time: " + currentTaskMaxTime);
         if (currentMovementLabel == MovementStateMachine.END_OF_MAZE || totalElapsedTime >= MAX_COMPLETION_TIME) {
             bool mazeCompleteSuccess = currentMovementLabel == MovementStateMachine.END_OF_MAZE;
@@ -160,8 +180,8 @@ public class PlayerMovementView : MonoBehaviour {
             UnityEngine.Debug.Log("updating movement UI");
             updateMovementUI(deltaTime);
         }
-
         totalElapsedTime += deltaTime;
+        updateAlertUI();
     }
 
     private void updateRestUI(float deltaTime){
@@ -169,9 +189,8 @@ public class PlayerMovementView : MonoBehaviour {
             restSlider.SetActive(true);
 
             //TODO: decide whether to do statement below:
-            //currentTaskMaxTime = isTrainingSession ? maxRestTaskTime : MAX_COMPLETION_TIME;
-
-            currentTaskMaxTime = MAX_REST_TASK_TIME;
+            currentTaskMaxTime = IS_TRAINING_SESSION ? MAX_REST_TASK_TIME : MAX_COMPLETION_TIME;
+            //currentTaskMaxTime = MAX_REST_TASK_TIME;
             currentTaskElapsedTime = 0;
             logMarkers(START_OF_REST_TASK);
             temporarilyTurnBCIOff(BCI_OFF_TIME_BETWEEN_STATE_CHANGE);
@@ -474,7 +493,7 @@ public class PlayerMovementView : MonoBehaviour {
     public void temporarilyTurnBCIOff(float seconds)
     {
         UnityEngine.Debug.Log("Starting coroutine to suspend BCI");
-        StartCoroutine(TurnBCIOff(seconds));
+        if (movementStateMachine.isBCIOn) StartCoroutine(TurnBCIOff(seconds));
     }
 
     public void logMarkers(int marker){

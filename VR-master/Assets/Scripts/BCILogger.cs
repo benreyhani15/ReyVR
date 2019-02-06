@@ -10,23 +10,14 @@ public class BCILogger
     private String classificationResultFile;
     private bool feedbackSession;
 
-    public BCILogger(String markersPath, String timePath)
-    {
-        markersFile = markersPath;
-        timeFile = timePath;
-        useOneFile = false;
-        UnityEngine.Debug.Log(markersFile);
-    }
-
-    public BCILogger(String pathFromApplicationDirectory, int trialNumber, bool isForFeedbackSession) {
+    public BCILogger(String pathFromApplicationDirectory, String sessionType, int trialNumber, bool isForFeedbackSession) {
         useOneFile = true;
         // Participants name, create file based on date
-        upFolderName = pathFromApplicationDirectory;
         string date = System.DateTime.Now.ToString("MM-dd-yyyy");
-        markersFile = "Logs/" + upFolderName + "/markers:" + date+"-"+trialNumber.ToString();
+        markersFile = "Logs/" + pathFromApplicationDirectory + "/markers_" + date + "_" + sessionType + "_" +trialNumber.ToString() + ".txt";
         feedbackSession = isForFeedbackSession;
         if (isForFeedbackSession) {
-            classificationResultFile = "Logs/" + upFolderName + "/classification_results:" + date + "-" + trialNumber.ToString();
+            classificationResultFile = "Logs/" + pathFromApplicationDirectory + "/classification_results_" + date + "_" + sessionType + "_" + trialNumber.ToString() + ".txt";
         }
     }
 

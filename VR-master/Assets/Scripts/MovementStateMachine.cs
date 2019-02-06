@@ -2,36 +2,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MovementStateMachine : MonoBehaviour {
+public class MovementStateMachine {
     public static int BCI_OFF = -2;
-    public static int REST = 0;
+    public static int RIGHT = 0;
     public static int FORWARD = 1;
-    public static int RIGHT = 2;
-    public static int LEFT = 3;
+    public static int LEFT = 2;
+    public static int REST = 3;
     public static int END_OF_MAZE = 4;
 
     public bool isBCIOn;
     private PlayerMovementView view;
-
-    private bool isOculusExcessivelyMoving;
 
     // read from EEG computer
     private int eegClassificationDecision;
     private bool isMMGExcessive;
     private bool isEOGExcessive;
 
-    public MovementStateMachine(PlayerMovementView pmw) {
-        view = pmw;
-    }
+    private bool isOculusExcessivelyMoving;
+    private OculusMovementDetector oculusMovementDetector;
 
-	// Use this for initialization
-	void Start () {
+    public MovementStateMachine(PlayerMovementView pmw, Transform cameraTransform) {
+        view = pmw;
+        UnityEngine.Debug.Log("Made MSM");
         Debug.Log("Start in MovementStateMachine");
         eegClassificationDecision = REST;
+        isBCIOn = true;
+        oculusMovementDetector = new OculusMovementDetector(cameraTransform);
+        oculusMovementDetector.startDetector();
         isOculusExcessivelyMoving = false;
+
         isEOGExcessive = false;
         isMMGExcessive = false;
-	}
+    }
 
     private void readEEGBuffer(){
         Debug.Log("Updating MovementStateMachine");
@@ -51,18 +53,6 @@ public class MovementStateMachine : MonoBehaviour {
         }
     }
 
-    private bool getMMGExcessive() {
-        return false;
-    }
-
-    private bool getEOGExcessive() {
-        return false; 
-    }
-
-    private bool getOculusExcessive() {
-        return false;
-    }
-
     public void updateStateMachine() {
         readOculusExcessivelyMoving();
         readEEGBuffer();
@@ -71,11 +61,13 @@ public class MovementStateMachine : MonoBehaviour {
 
     private void readOculusExcessivelyMoving()
     {
-        bool newValue = getOculusExcessive();
+        bool newValue = oculusMovementDetector.updateDetector();
         if (newValue != isOculusExcessivelyMoving) {
             isOculusExcessivelyMoving = newValue;
             view.logMarkers(isOculusExcessivelyMoving ? PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON : PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF);
         }
+
+        if (isOculusExcessivelyMoving) view.temporarilyTurnBCIOff(PlayerMovementView.BCI_OFF_TIME_AFTER_OCULUS_MOVEMENT);
     }
 
     private void readArtifactBuffer() {
@@ -92,7 +84,22 @@ public class MovementStateMachine : MonoBehaviour {
         }
     }
 
+    private bool getMMGExcessive()
+    {
+        return false;
+    }
+
+    private bool getEOGExcessive()
+    {
+        return false;
+    }
+
     public int getClassificationDecision() {
         return isBCIOn ? eegClassificationDecision : BCI_OFF;
+    }
+
+    public bool isExcessiveBodyMovement() {
+        // TODO: Add EOG AND MMG to decision?
+        return isOculusExcessivelyMoving;
     }
 }
