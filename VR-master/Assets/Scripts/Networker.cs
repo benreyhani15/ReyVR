@@ -67,6 +67,10 @@ public class Networker
         if (isListenerRunning)
         {
             isListenerRunning = false;
+            udpListenerThread.Abort();
+            UnityEngine.Debug.Log("Aborting network thread");
+            udpListenerThread = null;
+            client.Close();
         }
     }
 
