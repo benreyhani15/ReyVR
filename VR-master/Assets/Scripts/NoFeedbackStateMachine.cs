@@ -13,27 +13,20 @@ public class NoFeedbackStateMachine
     public bool isLocked;
     private bool firstUpdate;
     public BCILogger logger;
-    private Stopwatch stopWatch; 
+    private Stopwatch stopWatch;
 
     public static bool IS_DEBUG_MODE = true;
 
-    public static int START_OF_RIGHT_TASK = 0;
-    public static int START_OF_FORWARD_TASK = 1;
-    public static int START_OF_LEFT_TASK = 2;
-    public static int START_OF_REST_TASK = 3;
-    public static int START_OF_TRIAL = 4;
-    public static int END_OF_TRIAL = 5;
-    public static int START_OF_RUN = 6;
-    public static int END_OF_RUN = 7; // Coincides with next START_OF_RUN (not written)
-    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON = 8;
-    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF = 9;
-    public static int EXCESSIVE_EOG_ON = 15;
-    public static int EXCESSIVE_EOG_OFF = 16;
-    public static int EXCESSIVE_MMG_ON = 17;
-    public static int EXCESSIVE_MMG_OFF = 18;
-
-    private bool isMMGExcessive;
-    private bool isEOGExcessive;
+    public static int START_OF_RIGHT_TASK = 1;
+    public static int START_OF_FORWARD_TASK = 2;
+    public static int START_OF_LEFT_TASK = 3;
+    public static int START_OF_REST_TASK = 4;
+    public static int START_OF_TRIAL = 5;
+    public static int END_OF_TRIAL = 6;
+    public static int START_OF_RUN = 7;
+    public static int END_OF_RUN = 8; // Coincides with next START_OF_RUN (not written)
+    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON = 9;
+    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF = 10;
 
     private OculusMovementDetector oculusMovementDetector;
     private bool isOculusExcessivelyMoving;
@@ -59,7 +52,8 @@ public class NoFeedbackStateMachine
         isOculusExcessivelyMoving = false;
     }
 
-    public bool isSessionStarted() {
+    public bool isSessionStarted()
+    {
         return sessionStarted;
     }
 
@@ -74,12 +68,13 @@ public class NoFeedbackStateMachine
         {
             // Session is over
             logger.logMarkers(END_OF_TRIAL, stopWatch.ElapsedMilliseconds.ToString());
-        
+
             stopWatch.Reset();
             isTrialDone = true;
             ui.sessionOver();
         }
-        else {
+        else
+        {
             // Lock state machine so frame updates do nothing in between
             launchCoroutine();
             updateUI();
@@ -92,20 +87,24 @@ public class NoFeedbackStateMachine
     {
         UnityEngine.Debug.Log(logger);
         // Only related to showing/removing task cues
-        if (currentTrialState == TrialState.BlankScreen) {
+        if (currentTrialState == TrialState.BlankScreen)
+        {
             ui.arrow.SetActive(false);
             ui.relax.SetActive(false);
             ui.cross.SetActive(false);
             logger.logMarkers(START_OF_REST_TASK, stopWatch.ElapsedMilliseconds.ToString());
             UnityEngine.Debug.Log("Blank Screen");
-        } else if (currentTrialState == TrialState.Icon) {
+        }
+        else if (currentTrialState == TrialState.Icon)
+        {
             TaskController.TrialTask task = taskController.generateTaskRandomly();
             ui.cross.SetActive(false);
             ui.setTaskIcon(task);
-            logger.logMarkers((int)task, stopWatch.ElapsedMilliseconds.ToString());
+            logger.logMarkers(((int)task) + 1, stopWatch.ElapsedMilliseconds.ToString());
             UnityEngine.Debug.Log(task.ToString());
         }
-        else {
+        else
+        {
             ui.arrow.SetActive(false);
             ui.relax.SetActive(false);
             ui.cross.SetActive(true);
@@ -114,7 +113,8 @@ public class NoFeedbackStateMachine
         }
     }
 
-    public void startSession() {
+    public void startSession()
+    {
         sessionStarted = true;
         stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -134,17 +134,21 @@ public class NoFeedbackStateMachine
 
     private void updateState()
     {
-        if (firstUpdate) {
+        if (firstUpdate)
+        {
             currentTrialState = TrialState.BlankScreen;
-        } else {
+        }
+        else
+        {
             int newStateIndex = ((int)currentTrialState + 1) % 3;
             currentTrialState = (TrialState)newStateIndex;
         }
     }
 
-    public void updateExternalBuffers() {
+    public void updateExternalBuffers()
+    {
         readOculusExcessivelyMoving();
-        readArtifactBuffer();
+        //readArtifactBuffer();
     }
 
     IEnumerator StayIdle(float secondsIdle)
@@ -164,35 +168,9 @@ public class NoFeedbackStateMachine
         }
     }
 
-    private void readArtifactBuffer()
-    {
-        bool newMMG = getMMGExcessive();
-        if (newMMG != isMMGExcessive)
-        {
-            isMMGExcessive = newMMG;
-            logger.logMarkers(isMMGExcessive ? PlayerMovementView.EXCESSIVE_MMG_ON : PlayerMovementView.EXCESSIVE_MMG_OFF, stopWatch.ElapsedMilliseconds.ToString());
-        }
-
-        bool newEOG = getEOGExcessive();
-        if (newEOG != isEOGExcessive)
-        {
-            isEOGExcessive = newEOG;
-            logger.logMarkers(isEOGExcessive ? PlayerMovementView.EXCESSIVE_EOG_ON : PlayerMovementView.EXCESSIVE_EOG_OFF, stopWatch.ElapsedMilliseconds.ToString());
-        }
-    }
-
-    private bool getMMGExcessive()
-    {
-        return false;
-    }
-
-    private bool getEOGExcessive()
-    {
-        return false;
-    }
-
     public bool isExcessiveBodyMovement()
     {
-        return isOculusExcessivelyMoving || isEOGExcessive || isMMGExcessive;
+        return isOculusExcessivelyMoving;
     }
 }
+ 

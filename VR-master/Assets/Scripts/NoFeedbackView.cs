@@ -43,6 +43,7 @@ public class NoFeedbackView : MonoBehaviour {
                 artifactUI.GetComponent<Renderer>().material.color = stateMachine.isExcessiveBodyMovement() ? Color.red : Color.green;
             }
         }
+        stateMachine.logger.sendMarkers();
 	}
 
     public void setStandActive(bool active) {
@@ -84,7 +85,7 @@ public class NoFeedbackView : MonoBehaviour {
         if (Application.isEditor) {
         // UnityEditor.EditorApplication.isPlaying = false;
         } else {
-            Application.Quit();
+            //Application.Quit();
         }
     }
 }

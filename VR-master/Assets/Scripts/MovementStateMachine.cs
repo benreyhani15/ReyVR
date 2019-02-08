@@ -1,25 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+using System;
 
 public class MovementStateMachine {
     public static int BCI_OFF = -2;
-    public static int RIGHT = 0;
-    public static int FORWARD = 1;
-    public static int LEFT = 2;
-    public static int REST = 3;
-    public static int END_OF_MAZE = 4;
+    public static int RIGHT = 1;
+    public static int FORWARD = 2;
+    public static int LEFT = 3;
+    public static int REST = 4;
+    public static int END_OF_MAZE = 5;
 
     public bool isBCIOn;
     private PlayerMovementView view;
 
     // read from EEG computer
     private int eegClassificationDecision;
-    private bool isMMGExcessive;
-    private bool isEOGExcessive;
 
     private bool isOculusExcessivelyMoving;
     private OculusMovementDetector oculusMovementDetector;
+    public Networker networker;
 
     public MovementStateMachine(PlayerMovementView pmw, Transform cameraTransform) {
         view = pmw;
@@ -30,21 +31,38 @@ public class MovementStateMachine {
         oculusMovementDetector = new OculusMovementDetector(cameraTransform);
         oculusMovementDetector.startDetector();
         isOculusExcessivelyMoving = false;
-
-        isEOGExcessive = false;
-        isMMGExcessive = false;
+        networker = new Networker();
+        networker.startListening();
     }
 
     private void readEEGBuffer(){
         Debug.Log("Updating MovementStateMachine");
         // TODO: Read from buffer written by EEG computer connected PP/USB
-
+        bool GET_KEYBOARD_SIM = false;
         int newClassificationResult = eegClassificationDecision;
         //Simulating for now keyboard press
-        if (Input.GetKeyDown(KeyCode.UpArrow)) newClassificationResult = FORWARD;
-        if (Input.GetKeyDown(KeyCode.DownArrow)) newClassificationResult = REST;
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) newClassificationResult = LEFT;
-        if (Input.GetKeyDown(KeyCode.RightArrow)) newClassificationResult = RIGHT;
+        if (GET_KEYBOARD_SIM)
+        {
+            if (Input.GetKeyDown(KeyCode.UpArrow)) newClassificationResult = FORWARD;
+            if (Input.GetKeyDown(KeyCode.DownArrow)) newClassificationResult = REST;
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) newClassificationResult = LEFT;
+            if (Input.GetKeyDown(KeyCode.RightArrow)) newClassificationResult = RIGHT;
+        }
+        else {
+            string path = "C:\\Users\\reyhanib\\Documents\\VR\\ReyVR\\VR-master\\Assets\\eeg_buffer.txt";
+            // Get from text file that stores value received from network python script
+            StreamReader inp_stm = new StreamReader(path);
+
+            while (!inp_stm.EndOfStream)
+            {
+                string inp_ln = inp_stm.ReadLine();
+                Debug.Log("Classification value read from textfile: " + inp_ln);
+                eegClassificationDecision = Convert.ToInt32(inp_ln);
+            }
+
+            inp_stm.Close();
+        }
+        
 
         if (eegClassificationDecision != newClassificationResult){
             // TODO: Log change in classification decision?
@@ -55,8 +73,8 @@ public class MovementStateMachine {
 
     public void updateStateMachine() {
         readOculusExcessivelyMoving();
-        readEEGBuffer();
-        readArtifactBuffer();
+        eegClassificationDecision = networker.getData();
+        //readEEGBuffer();
     }
 
     private void readOculusExcessivelyMoving()
@@ -68,30 +86,6 @@ public class MovementStateMachine {
         }
 
         if (isOculusExcessivelyMoving) view.temporarilyTurnBCIOff(PlayerMovementView.BCI_OFF_TIME_AFTER_OCULUS_MOVEMENT);
-    }
-
-    private void readArtifactBuffer() {
-        bool newMMG = getMMGExcessive();
-        if (newMMG != isMMGExcessive) {
-            isMMGExcessive = newMMG;
-            view.logMarkers(isMMGExcessive ? PlayerMovementView.EXCESSIVE_MMG_ON : PlayerMovementView.EXCESSIVE_MMG_OFF);
-        }
-
-        bool newEOG = getEOGExcessive();
-        if (newEOG != isEOGExcessive) {
-            isEOGExcessive = newEOG;
-            view.logMarkers(isEOGExcessive ? PlayerMovementView.EXCESSIVE_EOG_ON : PlayerMovementView.EXCESSIVE_EOG_OFF);
-        }
-    }
-
-    private bool getMMGExcessive()
-    {
-        return false;
-    }
-
-    private bool getEOGExcessive()
-    {
-        return false;
     }
 
     public int getClassificationDecision() {

@@ -34,25 +34,21 @@ public class PlayerMovementView : MonoBehaviour {
     public static float BALL_DISTANCE_CHECKPOINT = 5f; // 5m 
     public static float STRENGTH_DISTANCE_CHECKPOINT = 5f;
 
-    public static int START_OF_RIGHT_TASK = 0;
-    public static int START_OF_FORWARD_TASK = 1;
-    public static int START_OF_LEFT_TASK = 2;
-    public static int START_OF_REST_TASK = 3;
-    public static int START_OF_TRIAL = 4;
-    public static int END_OF_TRIAL = 5;
-    public static int BCI_PAUSED = 6;
-    public static int BCI_UNPAUSED = 7;
-    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON = 8;
-    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF = 9;
-    public static int END_OF_TASK_SUCCESS = 10;
-    public static int END_OF_TASK_UNSUCCESS = 11;
-    public static int MOVED_FORWARD = 12;
-    public static int ORIENTATION_CHANGED = 13;
-    public static int MAZE_COMPLETED = 14;
-    public static int EXCESSIVE_EOG_ON = 15;
-    public static int EXCESSIVE_EOG_OFF = 16;
-    public static int EXCESSIVE_MMG_ON = 17;
-    public static int EXCESSIVE_MMG_OFF = 18;
+    public static int START_OF_RIGHT_TASK = 1;
+    public static int START_OF_FORWARD_TASK = 2;
+    public static int START_OF_LEFT_TASK = 3;
+    public static int START_OF_REST_TASK = 4;
+    public static int START_OF_TRIAL = 5;
+    public static int END_OF_TRIAL = 6;
+    public static int BCI_PAUSED = 7;
+    public static int BCI_UNPAUSED = 8;
+    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON = 9;
+    public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF = 10;
+    public static int END_OF_TASK_SUCCESS = 11;
+    public static int END_OF_TASK_UNSUCCESS = 12;
+    public static int MOVED_FORWARD = 13;
+    public static int ORIENTATION_CHANGED = 14;
+    public static int MAZE_COMPLETED = 15;
 
     public Vector3 originalBallLocalPosition;
     public Vector3 originalEulerLineRotation;
@@ -114,11 +110,18 @@ public class PlayerMovementView : MonoBehaviour {
         temporarilyTurnBCIOff(INITIAL_BCI_OFF_TIME);
     }
 
+    private void OnApplicationQuit()
+    {
+        UnityEngine.Debug.Log("On application quit called");
+        movementStateMachine.networker.stopListening();
+
+    }
     // Update is called once per frame
     void Update () {
         if (movementStateMachine == null) UnityEngine.Debug.Log("MSM is null");
         movementStateMachine.updateStateMachine();
         updateUI(Time.deltaTime);
+        logger.sendMarkers();
 	}
 
     private void resetVRTeleporter() {
@@ -170,7 +173,8 @@ public class PlayerMovementView : MonoBehaviour {
             }
             temporarilyTurnBCIOff(MAX_COMPLETION_TIME);
             vrTeleporter.ToggleDisplay(false);
-            Application.Quit();
+            //movementStateMachine.networker.stopListening();
+            //Application.Quit();
         }
 
         else if (inIdleState) {
