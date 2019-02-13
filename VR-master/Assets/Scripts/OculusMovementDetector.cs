@@ -8,8 +8,8 @@ public class OculusMovementDetector
 {
     private Transform cameraAnchor;
     private bool isOculusExcessivelyMoving;
-    private static float detectionWindowTime = 50f; // looks at change in values within 'x' ms
-    private static float deltaThreshold = 1f;
+    private static float detectionWindowTime = 200f; // looks at change in values within 'x' ms
+    private static float deltaThreshold = 6.5f;
     private Stopwatch stopWatch;
     private Vector3 rotationValues;
 

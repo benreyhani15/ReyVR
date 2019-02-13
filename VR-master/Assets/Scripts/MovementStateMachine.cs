@@ -18,6 +18,8 @@ public class MovementStateMachine {
     // read from EEG computer
     private int eegClassificationDecision;
 
+    private static bool GET_KEYBOARD_SIM = true;
+
     private bool isOculusExcessivelyMoving;
     private OculusMovementDetector oculusMovementDetector;
     public Networker networker;
@@ -38,7 +40,6 @@ public class MovementStateMachine {
     private void readEEGBuffer(){
         Debug.Log("Updating MovementStateMachine");
         // TODO: Read from buffer written by EEG computer connected PP/USB
-        bool GET_KEYBOARD_SIM = false;
         int newClassificationResult = eegClassificationDecision;
         //Simulating for now keyboard press
         if (GET_KEYBOARD_SIM)
@@ -47,22 +48,7 @@ public class MovementStateMachine {
             if (Input.GetKeyDown(KeyCode.DownArrow)) newClassificationResult = REST;
             if (Input.GetKeyDown(KeyCode.LeftArrow)) newClassificationResult = LEFT;
             if (Input.GetKeyDown(KeyCode.RightArrow)) newClassificationResult = RIGHT;
-        }
-        else {
-            string path = "C:\\Users\\reyhanib\\Documents\\VR\\ReyVR\\VR-master\\Assets\\eeg_buffer.txt";
-            // Get from text file that stores value received from network python script
-            StreamReader inp_stm = new StreamReader(path);
-
-            while (!inp_stm.EndOfStream)
-            {
-                string inp_ln = inp_stm.ReadLine();
-                Debug.Log("Classification value read from textfile: " + inp_ln);
-                eegClassificationDecision = Convert.ToInt32(inp_ln);
-            }
-
-            inp_stm.Close();
-        }
-        
+        }        
 
         if (eegClassificationDecision != newClassificationResult){
             // TODO: Log change in classification decision?
@@ -72,12 +58,21 @@ public class MovementStateMachine {
     }
 
     public void updateStateMachine() {
-        readOculusExcessivelyMoving();
-        eegClassificationDecision = networker.getData();
-        //readEEGBuffer();
+        if (GET_KEYBOARD_SIM)
+        {
+            readEEGBuffer();
+        }
+        else {
+            eegClassificationDecision = networker.getData();
+        }
+
     }
 
-    private void readOculusExcessivelyMoving()
+    public void resetAndStartOculusDetector() {
+        oculusMovementDetector.resetAndStopDetector();
+        oculusMovementDetector.startDetector();
+    }
+    public void updateOculusExcessivelyMoving()
     {
         bool newValue = oculusMovementDetector.updateDetector();
         if (newValue != isOculusExcessivelyMoving) {

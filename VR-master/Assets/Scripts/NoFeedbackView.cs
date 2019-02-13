@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using System.Diagnostics;
 
 public class NoFeedbackView : MonoBehaviour {
     public GameObject arrow;
@@ -13,8 +14,11 @@ public class NoFeedbackView : MonoBehaviour {
     public Transform eyeCamera;
 
     private NoFeedbackStateMachine stateMachine;
+
     public UnityEngine.GameObject artifactUI;
-    public bool showArtifactAlert = true;
+    public UnityEngine.GameObject stopUI;
+
+    private static bool TEST_OCULUS_MOVEMENT = false;
 
     // Use this for initialization
     void Start () {
@@ -22,13 +26,29 @@ public class NoFeedbackView : MonoBehaviour {
         arrow.SetActive(false);
         relax.SetActive(false);
         cross.SetActive(false);
-        artifactUI.SetActive(showArtifactAlert);
-        if (showArtifactAlert)
+
+        if (TEST_OCULUS_MOVEMENT) {
+            artifactUI.SetActive(true);
+            stopUI.SetActive(false);
             artifactUI.GetComponent<Renderer>().material.color = Color.green;
+        } else {
+            artifactUI.SetActive(false);
+            stopUI.SetActive(false);
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (this.isActiveAndEnabled) {
+            UnityEngine.Debug.LogWarning("On Application quit");
+        }
     }
 
     // Update is called once per frame
     void Update () {
+        Stopwatch totalStopWatch = new Stopwatch();
+        totalStopWatch.Start();
+        if (Time.deltaTime > 30) UnityEngine.Debug.LogWarning("Update with time DELTA: " + Time.deltaTime);
         if (!stateMachine.isSessionStarted() && Input.GetKeyDown(KeyCode.Return)) {
             stateMachine.startSession();
         }
@@ -38,13 +58,22 @@ public class NoFeedbackView : MonoBehaviour {
             if (!stateMachine.isLocked) {
                 stateMachine.update();
             }
+
             stateMachine.updateExternalBuffers();
-            if (artifactUI != null && showArtifactAlert) {
-                artifactUI.GetComponent<Renderer>().material.color = stateMachine.isExcessiveBodyMovement() ? Color.red : Color.green;
-            }
         }
-        stateMachine.logger.sendMarkers();
-	}
+
+        updateStopUI();
+        stateMachine.sendMarkers();
+        if (totalStopWatch.ElapsedMilliseconds > 30) UnityEngine.Debug.LogWarning("Update took @: " + (totalStopWatch.ElapsedMilliseconds));
+    }
+
+    private void updateStopUI() {
+        if (TEST_OCULUS_MOVEMENT) {
+            if (artifactUI != null) artifactUI.GetComponent<Renderer>().material.color = stateMachine.isExcessiveBodyMovement() ? Color.red : Color.green;
+        } else {
+            if (stopUI != null) stopUI.SetActive(stateMachine.isExcessiveBodyMovement());
+        }
+    }
 
     public void setStandActive(bool active) {
         quad.SetActive(active);

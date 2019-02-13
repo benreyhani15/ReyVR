@@ -17,7 +17,7 @@ public class Networker
     private IPEndPoint RemoteIpEndPoint;
     private Thread udpListenerThread;
     private static int PORT = 13000;
-    private static string SENDER_IP = "10.191.148.214";
+    private static string SENDER_IP = "10.191.148.110";
 
     static readonly object dataThreadLock = new object();
 

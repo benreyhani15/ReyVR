@@ -69,9 +69,8 @@ public class NoFeedbackStateMachine
             // Session is over
             logger.logMarkers(END_OF_TRIAL, stopWatch.ElapsedMilliseconds.ToString());
 
-            stopWatch.Reset();
+            //stopWatch.Reset();
             isTrialDone = true;
-            ui.sessionOver();
         }
         else
         {
@@ -171,6 +170,12 @@ public class NoFeedbackStateMachine
     public bool isExcessiveBodyMovement()
     {
         return isOculusExcessivelyMoving;
+    }
+
+    public void sendMarkers() {
+        if (sessionStarted) {
+            logger.sendMarkers(stopWatch.ElapsedMilliseconds.ToString());
+        }
     }
 }
  

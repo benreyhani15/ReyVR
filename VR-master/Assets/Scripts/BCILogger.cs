@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 public class BCILogger
 {
@@ -56,6 +57,7 @@ public class BCILogger
     }
 
     public void logMarkers(int marker, String timeFromStartMS) {
+        //UnityEngine.Debug.LogWarning("Logging markers: " + marker + "@: " + timeFromStartMS);
         appendToTextFile(marker.ToString(), timeFromStartMS);
         markerQueue.Enqueue(marker);
         markerQueue.Enqueue(0);
@@ -70,7 +72,6 @@ public class BCILogger
 
     public void appendToTextFile(String marker, String timeMS)
     {
-
         if (useOneFile) {
             using (StreamWriter sw = new StreamWriter(markersFile, true))
             {
@@ -91,22 +92,41 @@ public class BCILogger
 
     }
 
-    public void sendMarkers() {
+    public void sendMarkers(string timeMS) {
         if (markerQueue.Count > 0)
         {
-            bool sent = WriteParallel(markerQueue.Dequeue());
+            int marker = markerQueue.Dequeue();
+            WriteParallel(marker);
+            //UnityEngine.Debug.LogWarning("Marker sent: " + marker + "@: " + timeMS);
         }
     }
-
+      
     private int ReadParallel()
     {
-        return InpOut32_Declarations.Input(LPT2);
+        int marker = -1;
+        try
+        {
+            marker = InpOut32_Declarations.Input(LPT1);
+        }
+        catch (Exception e) {
+            UnityEngine.Debug.Log(e.ToString());
+        }
+        return marker;
     }
 
     private bool WriteParallel(int marker)
     {
-        InpOut32_Declarations.Output(LPT2, 0);
-        return true;
+        bool success = true;
+        try
+        {
+            InpOut32_Declarations.Output(LPT1, marker);
+            //UnityEngine.Debug.Log("Wrote marker "+ marker + " to " + LPT1);
+        }
+        catch (Exception e) {
+            UnityEngine.Debug.Log(e.ToString());
+            success = false;
+        }
+        return success;
     }
     
     private void checkValidParallelPort() {
@@ -117,7 +137,7 @@ public class BCILogger
         }
         catch (Exception ex)
         {
-            UnityEngine.Debug.Log("cant access Parallel port");
+            UnityEngine.Debug.Log(ex.ToString());
         }
     }
 }
