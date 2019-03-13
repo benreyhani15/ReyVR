@@ -42,14 +42,14 @@ public class PlayerMovementView : MonoBehaviour {
     public static int START_OF_REST_TASK = 4;
     public static int START_OF_TRIAL = 5;
     public static int END_OF_TRIAL = 6;
-    public static int BCI_PAUSED = 7;
-    public static int BCI_UNPAUSED = 8;
+    //public static int BCI_PAUSED = 7;
+    //public static int BCI_UNPAUSED = 8;
     public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON = 9;
     public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF = 10;
     public static int END_OF_TASK_SUCCESS = 11;
     public static int END_OF_TASK_UNSUCCESS = 12;
-    public static int MOVED_FORWARD = 13;
-    public static int ORIENTATION_CHANGED = 14;
+    //public static int MOVED_FORWARD = 13;
+    //public static int ORIENTATION_CHANGED = 14;
     public static int MAZE_COMPLETED = 15;
 
     public Vector3 originalBallLocalPosition;
@@ -59,19 +59,23 @@ public class PlayerMovementView : MonoBehaviour {
     private bool taskCompleted;
     public bool IS_TRAINING_SESSION = false;
 
+    public bool IS_ART_FEEDBACK = false;
+    public int PERCENT_ART_CORRECT = 60;
+
     UnityEngine.UI.Slider progressSlider;
 
     MovementStateMachine movementStateMachine;
-    private int currentMovementLabel;
+    public int currentMovementLabel;
     public Transform playerTransform;
 
     public VRTeleporter vrTeleporter;
     private static bool USE_BALL = false;
 
-    private static bool SUPPRESS_UI_LOGS = false;
+    private static bool SUPPRESS_UI_LOGS = true;
 
     // Set to true when checkpoints are finished and user has to stay idle for a few seconds, in this mode a progress bar appears and it should be filled by correctly being in NC state
     private bool inIdleState;
+    private bool hasIdleState = false;
 
     private BCILogger logger;
     public string participantName = "Ben";
@@ -137,8 +141,7 @@ public class PlayerMovementView : MonoBehaviour {
     // Update is called once per frame
     void Update () {
         float orig = totalStopWatch.ElapsedMilliseconds;
-        if (Time.deltaTime*1000 > 30f)UnityEngine.Debug.LogWarning("TIme DELTA: " + 1000*Time.deltaTime);
-
+        //if (Time.deltaTime*1000 > 30f)UnityEngine.Debug.LogWarning("TIme DELTA: " + 1000*Time.deltaTime);
         if (movementStateMachine == null) UnityEngine.Debug.Log("MSM is null");
         movementStateMachine.updateStateMachine();
         updateUI(Time.deltaTime);
@@ -222,49 +225,31 @@ public class PlayerMovementView : MonoBehaviour {
             currentTaskElapsedTime = 0;
             logMarkers(START_OF_REST_TASK);
             temporarilyTurnBCIOff(BCI_OFF_TIME_BETWEEN_STATE_CHANGE);
-        } else {
+        }
+        else
+        {
             bool ranOutOfTime = currentTaskElapsedTime > currentTaskMaxTime;
             bool successfullyFinished = isSliderFull(progressSlider);
             if (successfullyFinished || ranOutOfTime)
             {
                 // Slider is complete or ran out of time; TODO: show animation saying good job, etc.
-                if (isSliderFull(progressSlider)) {
+                if (isSliderFull(progressSlider))
+                {
                     logMarkers(END_OF_TASK_SUCCESS);
-                } else {
+                }
+                else
+                {
                     logMarkers(END_OF_TASK_UNSUCCESS);
                 }
 
                 progressSlider.value = 0;
                 restSlider.SetActive(false);
-
-                if (currentMovementLabel == MovementStateMachine.RIGHT || currentMovementLabel == MovementStateMachine.LEFT)
-                {
-                    if (IS_TRAINING_SESSION || (!IS_TRAINING_SESSION && taskCompleted)) {
-                        changeUserOrientation();
-                        currentMovementLabel = MovementStateMachine.FORWARD;
-                    } 
-                    resetLineArrow();
-                } else if (USE_BALL && currentMovementLabel == MovementStateMachine.FORWARD) {
-                    if (IS_TRAINING_SESSION || (!IS_TRAINING_SESSION && taskCompleted))
-                    {
-                        changeUserPosition();
-                    }
-                    forwardBall.transform.localPosition = originalBallLocalPosition;
-                    forwardBall.SetActive(false);
-                } else if(!USE_BALL && currentMovementLabel == MovementStateMachine.FORWARD) {
-                    // using VRteleporter
-                    if (IS_TRAINING_SESSION || (!IS_TRAINING_SESSION && taskCompleted)) {
-                        changeUserPosition();
-                    }
-                    resetVRTeleporter();
-                  }
-
+                updateNextStateAndView();
                 inIdleState = false;
                 taskCompleted = false;
                 classificationStopWatch.Reset();
-                movementStateMachine.resetAndStartOculusDetector();
             }
-            else if(movementStateMachine.isBCIOn) 
+            else if (movementStateMachine.isBCIOn)
             {
                 if (movementStateMachine.getClassificationDecision() == MovementStateMachine.REST)
                 {
@@ -272,7 +257,9 @@ public class PlayerMovementView : MonoBehaviour {
                     float newVal = progressSlider.value + (deltaTime * REST_BAR_SPEED);
                     newVal = Mathf.Min(newVal, progressSlider.maxValue);
                     progressSlider.value = newVal;
-                } else {
+                }
+                else
+                {
                     if (!SUPPRESS_UI_LOGS) UnityEngine.Debug.Log("incorrectly not classified as rest");
                 }
                 logClassificationResult(MovementStateMachine.REST, movementStateMachine.getClassificationDecision());
@@ -281,20 +268,57 @@ public class PlayerMovementView : MonoBehaviour {
         }
     }
 
+    private void updateNextStateAndView() {
+        if (currentMovementLabel == MovementStateMachine.RIGHT || currentMovementLabel == MovementStateMachine.LEFT)
+        {
+            if (IS_TRAINING_SESSION || (!IS_TRAINING_SESSION && taskCompleted))
+            {
+                UnityEngine.Debug.Log("in update movement ui: Setting movement label to forward");
+                changeUserOrientation();
+                currentMovementLabel = MovementStateMachine.FORWARD;
+            }
+            resetLineArrow();
+        }
+        else if (USE_BALL && currentMovementLabel == MovementStateMachine.FORWARD)
+        {
+            if (IS_TRAINING_SESSION || (!IS_TRAINING_SESSION && taskCompleted))
+            {
+                changeUserPosition();
+            }
+            forwardBall.transform.localPosition = originalBallLocalPosition;
+            forwardBall.SetActive(false);
+        }
+        else if (!USE_BALL && currentMovementLabel == MovementStateMachine.FORWARD)
+        {
+            // using VRteleporter
+            if (IS_TRAINING_SESSION || (!IS_TRAINING_SESSION && taskCompleted))
+            {
+                changeUserPosition();
+                if (!hasIdleState) currentMovementLabel = 0;
+            }
+            resetVRTeleporter();
+        }
+        movementStateMachine.resetAndStartOculusDetector();
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         string tag = other.gameObject.tag;
         // LOG STUFF
         if (tag.Equals("Forward")) {
+            UnityEngine.Debug.Log("OnTriggerEnter: Setting movement label to forward");
             currentMovementLabel = MovementStateMachine.FORWARD;
             other.gameObject.transform.parent.GetChild(0).gameObject.SetActive(false);
         } else if (tag.Equals("Right")){
+            UnityEngine.Debug.Log("OnTriggerEnter: Setting movement label to right");
             currentMovementLabel = MovementStateMachine.RIGHT;
             other.gameObject.transform.parent.GetChild(0).gameObject.SetActive(false);
         } else if (tag.Equals("Left")) {
+            UnityEngine.Debug.Log("OnTriggerEnter: Setting movement label to left");
             currentMovementLabel = MovementStateMachine.LEFT;
             other.gameObject.transform.parent.GetChild(0).gameObject.SetActive(false);
         } else if (tag.Equals("End")) {
+            UnityEngine.Debug.Log("OnTriggerEnter: Setting movement label to end");
             currentMovementLabel = MovementStateMachine.END_OF_MAZE;
             other.gameObject.transform.parent.GetChild(0).gameObject.SetActive(false);
         }
@@ -316,13 +340,13 @@ public class PlayerMovementView : MonoBehaviour {
                 initVRTeleporter();
                 resetLineArrow();
                 logMarkers(START_OF_FORWARD_TASK);
+                UnityEngine.Debug.Log("Updating movement UI activating teleporter");
                 temporarilyTurnBCIOff(BCI_OFF_TIME_BETWEEN_STATE_CHANGE);
             } else {
                 // Reached checkpoint or ran out of time
                 if (USE_BALL && ((forwardBall.transform.localPosition.z >= BALL_DISTANCE_CHECKPOINT + originalBallLocalPosition.z) || currentTaskElapsedTime >= currentTaskMaxTime))
                 {
                     if (!SUPPRESS_UI_LOGS) UnityEngine.Debug.Log("Reached Checkpoint or ran out of time");
-                    inIdleState = true;
                     if (taskCompleted)
                     {
                         logMarkers(END_OF_TASK_SUCCESS);
@@ -333,9 +357,13 @@ public class PlayerMovementView : MonoBehaviour {
                     }
                     forwardBall.SetActive(false);
                     classificationStopWatch.Reset();
+                    if (hasIdleState) {
+                        inIdleState = true;
+                    } else {
+                        updateNextStateAndView();
+                    }
                 } else if (!USE_BALL && ((vrTeleporter.strength >= (STRENGTH_DISTANCE_CHECKPOINT+originalVRTeleporterStrength)) || (currentTaskElapsedTime >= currentTaskMaxTime))){
                     if (!SUPPRESS_UI_LOGS) UnityEngine.Debug.Log("Reached Checkpoint or ran out of time");
-                    inIdleState = true;
                     taskCompleted = vrTeleporter.strength >= STRENGTH_DISTANCE_CHECKPOINT + originalVRTeleporterStrength;
                     if (taskCompleted) {
                         logMarkers(END_OF_TASK_SUCCESS);
@@ -344,6 +372,11 @@ public class PlayerMovementView : MonoBehaviour {
                     }
                     vrTeleporter.ToggleDisplay(false);
                     classificationStopWatch.Reset();
+                    if (hasIdleState) {
+                        inIdleState = true;
+                    } else {
+                        updateNextStateAndView();
+                    }
                 }
                 else if (movementStateMachine.isBCIOn)
                 {
@@ -375,7 +408,6 @@ public class PlayerMovementView : MonoBehaviour {
                 if (convertedAngle <= (360 - ROTATION_ANGLE_CHECKPOINT) || (currentTaskElapsedTime >= currentTaskMaxTime))
                 {
                     if (!SUPPRESS_UI_LOGS) UnityEngine.Debug.Log("Reached Checkpoint or ran out of time");
-                    inIdleState = true;
                     taskCompleted = convertedAngle <= (360 - ROTATION_ANGLE_CHECKPOINT);
                     if (taskCompleted) {
                         logMarkers(END_OF_TASK_SUCCESS);
@@ -384,6 +416,14 @@ public class PlayerMovementView : MonoBehaviour {
                     }
                     rotationLine.SetActive(false);
                     classificationStopWatch.Reset();
+                    if (hasIdleState)
+                    {
+                        inIdleState = true;
+                    }
+                    else
+                    {
+                        updateNextStateAndView();
+                    }
                 }
                 else if (movementStateMachine.isBCIOn)
                 {
@@ -416,7 +456,6 @@ public class PlayerMovementView : MonoBehaviour {
                 if (rotationLine.transform.localEulerAngles.y >= ROTATION_ANGLE_CHECKPOINT || (currentTaskElapsedTime >= currentTaskMaxTime))
                 {
                     if (!SUPPRESS_UI_LOGS) UnityEngine.Debug.Log("Reached Checkpoint or ran out of time");
-                    inIdleState = true;
                     taskCompleted = rotationLine.transform.localEulerAngles.y >= ROTATION_ANGLE_CHECKPOINT;
                     if (taskCompleted){
                         logMarkers(END_OF_TASK_SUCCESS);
@@ -425,6 +464,14 @@ public class PlayerMovementView : MonoBehaviour {
                     }
                     rotationLine.SetActive(false);
                     classificationStopWatch.Reset();
+                    if (hasIdleState)
+                    {
+                        inIdleState = true;
+                    }
+                    else
+                    {
+                        updateNextStateAndView();
+                    }
                 }
                 else if (movementStateMachine.isBCIOn)
                 {
@@ -447,7 +494,7 @@ public class PlayerMovementView : MonoBehaviour {
 
     private void changeUserPosition() {
         playerTransform.Translate(Vector3.forward * METRES_PER_TELEPORT);
-        logMarkers(MOVED_FORWARD);
+        //logMarkers(MOVED_FORWARD);
     }
 
     private void changeUserOrientation() {
@@ -456,15 +503,7 @@ public class PlayerMovementView : MonoBehaviour {
         } else if (currentMovementLabel == MovementStateMachine.LEFT) {
             playerTransform.Rotate(0, 360 - ROTATION_ANGLE_CHECKPOINT, 0);
         }
-        logMarkers(ORIENTATION_CHANGED);
-    }
-
-    private int getCurrentMovementLabel() {
-        // TODO: Read the label of the plane that player is standing on: SIMULATED FOR NOW
-        if (Input.GetKeyDown(KeyCode.W)) return MovementStateMachine.FORWARD;
-        else if (Input.GetKeyDown(KeyCode.A)) return MovementStateMachine.LEFT;
-        else if (Input.GetKeyDown(KeyCode.D)) return MovementStateMachine.RIGHT;
-        else return currentMovementLabel;
+        //logMarkers(ORIENTATION_CHANGED);
     }
 
     private bool isSliderFull(UnityEngine.UI.Slider slider) {
@@ -512,11 +551,11 @@ public class PlayerMovementView : MonoBehaviour {
     {
         movementStateMachine.isBCIOn = false;
         if (!SUPPRESS_UI_LOGS) UnityEngine.Debug.Log("Turned BCI Off");
-        logMarkers(BCI_PAUSED);
+        //logMarkers(BCI_PAUSED);
         yield return new WaitForSeconds(seconds);
         movementStateMachine.isBCIOn = true;
         if (!SUPPRESS_UI_LOGS) UnityEngine.Debug.Log("Turned BCI on");
-        logMarkers(BCI_UNPAUSED);
+        //logMarkers(BCI_UNPAUSED);
     }
 
     public void temporarilyTurnBCIOff(float seconds)

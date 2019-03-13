@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System;
+using System.Diagnostics;
 
 public class MovementStateMachine {
     public static int BCI_OFF = -2;
@@ -14,20 +15,24 @@ public class MovementStateMachine {
 
     public bool isBCIOn;
     private PlayerMovementView view;
+    private System.Random randomNumGen;
 
     // read from EEG computer
     private int eegClassificationDecision;
 
-    private static bool GET_KEYBOARD_SIM = true;
+    private static bool GET_KEYBOARD_SIM = false;
 
     private bool isOculusExcessivelyMoving;
     private OculusMovementDetector oculusMovementDetector;
     public Networker networker;
 
+    private Stopwatch artStopWatch;
+
+    public static float ART_FEEDBACK_CHANGE_INTERVAL = 500f;
+
     public MovementStateMachine(PlayerMovementView pmw, Transform cameraTransform) {
         view = pmw;
         UnityEngine.Debug.Log("Made MSM");
-        Debug.Log("Start in MovementStateMachine");
         eegClassificationDecision = REST;
         isBCIOn = true;
         oculusMovementDetector = new OculusMovementDetector(cameraTransform);
@@ -35,10 +40,13 @@ public class MovementStateMachine {
         isOculusExcessivelyMoving = false;
         networker = new Networker();
         networker.startListening();
+        artStopWatch = new Stopwatch();
+        artStopWatch.Start();
+        randomNumGen = new System.Random();
     }
 
     private void readEEGBuffer(){
-        Debug.Log("Updating MovementStateMachine");
+        UnityEngine.Debug.Log("Updating MovementStateMachine");
         // TODO: Read from buffer written by EEG computer connected PP/USB
         int newClassificationResult = eegClassificationDecision;
         //Simulating for now keyboard press
@@ -52,7 +60,7 @@ public class MovementStateMachine {
 
         if (eegClassificationDecision != newClassificationResult){
             // TODO: Log change in classification decision?
-            Debug.Log("Change in classification to: " + newClassificationResult);
+            UnityEngine.Debug.Log("Change in classification to: " + newClassificationResult);
             eegClassificationDecision = newClassificationResult;
         }
     }
@@ -61,8 +69,14 @@ public class MovementStateMachine {
         if (GET_KEYBOARD_SIM)
         {
             readEEGBuffer();
-        }
-        else {
+        } else if (view.IS_ART_FEEDBACK) {
+            int value = randomNumGen.Next(1, 101);
+            if (artStopWatch.ElapsedMilliseconds >= ART_FEEDBACK_CHANGE_INTERVAL) {
+                eegClassificationDecision = value <= view.PERCENT_ART_CORRECT ? view.currentMovementLabel : REST;
+                artStopWatch.Reset();
+                artStopWatch.Start();
+            }
+        } else  {
             eegClassificationDecision = networker.getData();
         }
 
