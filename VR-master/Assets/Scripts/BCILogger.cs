@@ -57,8 +57,11 @@ public class BCILogger
     }
 
     public void logMarkers(int marker, String timeFromStartMS) {
-        //UnityEngine.Debug.LogWarning("Logging markers: " + marker + "@: " + timeFromStartMS);
+        UnityEngine.Debug.LogWarning("Logging markers: " + marker + "@: " + timeFromStartMS);
         appendToTextFile(marker.ToString(), timeFromStartMS);
+    }
+
+    public void queueMarkers(int marker) {
         markerQueue.Enqueue(marker);
         markerQueue.Enqueue(0);
     }
@@ -67,6 +70,14 @@ public class BCILogger
         using (StreamWriter sw = new StreamWriter(classificationResultFile, true))
         {
             sw.WriteLine(trueLabel + "," + predictedLabel + "," + timeMS);
+        }
+    }
+
+    public void logLabels(int trueLabel, String timeMS)
+    {
+        using (StreamWriter sw = new StreamWriter(classificationResultFile, true))
+        {
+            sw.WriteLine(trueLabel +  "," + timeMS);
         }
     }
 
@@ -97,7 +108,7 @@ public class BCILogger
         {
             int marker = markerQueue.Dequeue();
             WriteParallel(marker);
-            //UnityEngine.Debug.LogWarning("Marker sent: " + marker + "@: " + timeMS);
+            UnityEngine.Debug.LogWarning("Marker sent: " + marker + "@: " + timeMS);
         }
     }
       

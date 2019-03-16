@@ -20,34 +20,32 @@ public class MovementStateMachine {
     // read from EEG computer
     private int eegClassificationDecision;
 
-    private static bool GET_KEYBOARD_SIM = false;
+    private static bool GET_KEYBOARD_SIM = true;
 
     private bool isOculusExcessivelyMoving;
     private OculusMovementDetector oculusMovementDetector;
     public Networker networker;
 
-    private Stopwatch artStopWatch;
+    public Stopwatch artStopWatch;
 
-    public static float ART_FEEDBACK_CHANGE_INTERVAL = 500f;
+    public static float ART_FEEDBACK_CHANGE_INTERVAL = 2000f;
 
     public MovementStateMachine(PlayerMovementView pmw, Transform cameraTransform) {
         view = pmw;
-        UnityEngine.Debug.Log("Made MSM");
         eegClassificationDecision = REST;
         isBCIOn = true;
+
         oculusMovementDetector = new OculusMovementDetector(cameraTransform);
         oculusMovementDetector.startDetector();
-        isOculusExcessivelyMoving = false;
+
         networker = new Networker();
         networker.startListening();
+
         artStopWatch = new Stopwatch();
-        artStopWatch.Start();
         randomNumGen = new System.Random();
     }
 
     private void readEEGBuffer(){
-        UnityEngine.Debug.Log("Updating MovementStateMachine");
-        // TODO: Read from buffer written by EEG computer connected PP/USB
         int newClassificationResult = eegClassificationDecision;
         //Simulating for now keyboard press
         if (GET_KEYBOARD_SIM)
@@ -69,17 +67,29 @@ public class MovementStateMachine {
         if (GET_KEYBOARD_SIM)
         {
             readEEGBuffer();
-        } else if (view.IS_ART_FEEDBACK) {
-            int value = randomNumGen.Next(1, 101);
-            if (artStopWatch.ElapsedMilliseconds >= ART_FEEDBACK_CHANGE_INTERVAL) {
-                eegClassificationDecision = value <= view.PERCENT_ART_CORRECT ? view.currentMovementLabel : REST;
-                artStopWatch.Reset();
-                artStopWatch.Start();
-            }
-        } else  {
+        }  else  {
             eegClassificationDecision = networker.getData();
         }
+    }
 
+    public void updateArtFBStateMachine(bool forceUpdate) {
+        if (!isBCIOn) return;
+        if (view.taskCompleted) {
+            view.logLabels(eegClassificationDecision);
+            view.logger.queueMarkers(Math.Abs(eegClassificationDecision));
+            artStopWatch.Reset();
+        } else if (forceUpdate || artStopWatch.ElapsedMilliseconds >= ART_FEEDBACK_CHANGE_INTERVAL) {
+            int value = randomNumGen.Next(1, 101);
+            int oldDecision = eegClassificationDecision;
+            eegClassificationDecision = value <= view.PERCENT_ART_CORRECT ? view.currentMovementLabel : -view.currentMovementLabel;
+            if (!forceUpdate)
+            {
+                view.logLabels(oldDecision);
+                view.logger.queueMarkers(Math.Abs(oldDecision));
+            }
+            artStopWatch.Reset();
+            artStopWatch.Start();
+        }
     }
 
     public void resetAndStartOculusDetector() {
@@ -91,10 +101,11 @@ public class MovementStateMachine {
         bool newValue = oculusMovementDetector.updateDetector();
         if (newValue != isOculusExcessivelyMoving) {
             isOculusExcessivelyMoving = newValue;
-            view.logMarkers(isOculusExcessivelyMoving ? PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON : PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF);
+            if (isOculusExcessivelyMoving) view.logMarkers(PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON);
+            //view.logMarkers(isOculusExcessivelyMoving ? PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON : PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF);
         }
 
-        if (isOculusExcessivelyMoving) view.temporarilyTurnBCIOff(PlayerMovementView.BCI_OFF_TIME_AFTER_OCULUS_MOVEMENT);
+        //if (isOculusExcessivelyMoving) view.temporarilyTurnBCIOff(PlayerMovementView.BCI_OFF_TIME_AFTER_OCULUS_MOVEMENT);
     }
 
     public int getClassificationDecision() {
