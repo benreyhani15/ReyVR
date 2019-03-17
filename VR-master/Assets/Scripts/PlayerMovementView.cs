@@ -46,9 +46,9 @@ public class PlayerMovementView : MonoBehaviour {
     public static int EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF = 10;
     public static int END_OF_TASK_SUCCESS = 11;
     public static int END_OF_TASK_UNSUCCESS = 12;
-    //public static int MOVED_FORWARD = 13;
-    //public static int ORIENTATION_CHANGED = 14;
-    public static int MAZE_COMPLETED = 15;
+    public static int END_OF_EPOCH = 13;
+    public static int MAZE_COMPLETED = 14;
+   
 
     public Vector3 originalEulerLineRotation;
     public float originalVRTeleporterStrength;
@@ -481,7 +481,7 @@ public class PlayerMovementView : MonoBehaviour {
 
     public void logMarkers(int marker) {
         logger.logMarkers(marker, totalStopWatch.ElapsedMilliseconds.ToString());
-        if (!IS_ART_FEEDBACK) logger.queueMarkers(marker);
+        logger.queueMarkers(marker);
     }
 
     public void logClassificationResult(int trueLabel, int predictedLabel) {

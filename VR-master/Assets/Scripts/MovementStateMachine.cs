@@ -76,7 +76,7 @@ public class MovementStateMachine {
         if (!isBCIOn) return;
         if (view.taskCompleted) {
             view.logLabels(eegClassificationDecision);
-            view.logger.queueMarkers(Math.Abs(eegClassificationDecision));
+            view.logMarkers(PlayerMovementView.END_OF_EPOCH);
             artStopWatch.Reset();
         } else if (forceUpdate || artStopWatch.ElapsedMilliseconds >= ART_FEEDBACK_CHANGE_INTERVAL) {
             int value = randomNumGen.Next(1, 101);
@@ -85,7 +85,7 @@ public class MovementStateMachine {
             if (!forceUpdate)
             {
                 view.logLabels(oldDecision);
-                view.logger.queueMarkers(Math.Abs(oldDecision));
+                view.logMarkers(PlayerMovementView.END_OF_EPOCH);
             }
             artStopWatch.Reset();
             artStopWatch.Start();
