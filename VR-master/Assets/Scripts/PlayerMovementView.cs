@@ -17,7 +17,7 @@ public class PlayerMovementView : MonoBehaviour {
     // Amount of time to turn off BCI at beggining of new task
     public static float BCI_OFF_TIME_BETWEEN_STATE_CHANGE = 2f;
     public static float BCI_OFF_TIME_AFTER_OCULUS_MOVEMENT = 0f;
-    public static float INITIAL_BCI_OFF_TIME = 3f;
+    public static float INITIAL_BCI_OFF_TIME = 2f;
 
     private float currentTaskElapsedTime;
     private float currentTaskMaxTime;
@@ -49,7 +49,6 @@ public class PlayerMovementView : MonoBehaviour {
     public static int END_OF_EPOCH = 13;
     public static int MAZE_COMPLETED = 14;
    
-
     public Vector3 originalEulerLineRotation;
     public float originalVRTeleporterStrength;
 
@@ -66,6 +65,8 @@ public class PlayerMovementView : MonoBehaviour {
     public Transform playerTransform;
 
     public VRTeleporter vrTeleporter;
+    private bool hasStarted;
+    private bool isDone;
 
     private static bool SUPPRESS_UI_LOGS = true;
 
@@ -101,24 +102,17 @@ public class PlayerMovementView : MonoBehaviour {
         currentMovementLabel = MovementStateMachine.REST;
         string logFilePrefix = IS_ART_FEEDBACK ? "Feedback" : "Roam";
         logger = new BCILogger(participantName, logFilePrefix, trialNumber, true);
-        logger.logMarkers(START_OF_TRIAL, "0");
-        movementStateMachine = new MovementStateMachine(this, eyeCameraTransform);
-        totalStopWatch = new Stopwatch();
-        totalStopWatch.Start();
-        classificationStopWatch = new Stopwatch();
-        playerTransform.position = MAZE_STARTING_SPOTS[trialNumber % MAZE_STARTING_SPOTS.Length];
 
         if (TEST_OCULUS_MOVEMENT)
         {
             alertUI.SetActive(true);
             stopUI.SetActive(false);
         }
-        else {
+        else
+        {
             stopUI.SetActive(false);
             alertUI.SetActive(false);
         }
-        
-        temporarilyTurnBCIOff(INITIAL_BCI_OFF_TIME);
     }
 
     private void OnApplicationQuit()
@@ -130,15 +124,33 @@ public class PlayerMovementView : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-        updateUI(Time.deltaTime);
-        if (IS_ART_FEEDBACK)
+        if (!hasStarted)
         {
-            movementStateMachine.updateArtFBStateMachine(false);
+            if (Input.GetKeyDown(KeyCode.Return))
+            {
+                logger.logMarkers(START_OF_TRIAL, "0");
+                movementStateMachine = new MovementStateMachine(this, eyeCameraTransform);
+                totalStopWatch = new Stopwatch();
+                totalStopWatch.Start();
+                classificationStopWatch = new Stopwatch();
+                playerTransform.position = MAZE_STARTING_SPOTS[trialNumber % MAZE_STARTING_SPOTS.Length];    
+                hasStarted = true;
+                temporarilyTurnBCIOff(INITIAL_BCI_OFF_TIME);
+            }
+        } else {
+            if (!isDone) {
+                updateUI(Time.deltaTime);
+                if (IS_ART_FEEDBACK)
+                {
+                    movementStateMachine.updateArtFBStateMachine(false);
+                }
+                else
+                {
+                    movementStateMachine.updateStateMachine();
+                }
+            } 
+            logger.sendMarkers(totalStopWatch.ElapsedMilliseconds.ToString());
         }
-        else {
-            movementStateMachine.updateStateMachine();
-        }
-        logger.sendMarkers(totalStopWatch.ElapsedMilliseconds.ToString());
     }
 
     private void resetVRTeleporter() {
@@ -176,15 +188,19 @@ public class PlayerMovementView : MonoBehaviour {
         }
     }
 
+    private bool isFinished() {
+        return ((currentMovementLabel == MovementStateMachine.END_OF_MAZE) || (!IS_ART_FEEDBACK && totalElapsedTime >= MAX_COMPLETION_TIME));
+    }
+
     private void updateUI(float deltaTime){
 
         //UnityEngine.Debug.Log("current task elapsed time : " + currentTaskElapsedTime + "\n Current task max time: " + currentTaskMaxTime);
-        if (currentMovementLabel == MovementStateMachine.END_OF_MAZE || (!IS_ART_FEEDBACK && totalElapsedTime >= MAX_COMPLETION_TIME)) {
+        if (isFinished()) {
             bool mazeCompleteSuccess = currentMovementLabel == MovementStateMachine.END_OF_MAZE;
             if (mazeCompleteSuccess) {
                 if (IS_TRAINING_SESSION) logMarkers(END_OF_TRIAL);
                 else logMarkers(MAZE_COMPLETED);
-                EditorApplication.isPlaying = false;
+                //EditorApplication.isPlaying = false;
             }
             else
             {
@@ -192,6 +208,7 @@ public class PlayerMovementView : MonoBehaviour {
             }
             temporarilyTurnBCIOff(MAX_COMPLETION_TIME);
             vrTeleporter.ToggleDisplay(false);
+            isDone = true;
             //movementStateMachine.networker.stopListening();
             //Application.Quit();
         }
@@ -269,7 +286,7 @@ public class PlayerMovementView : MonoBehaviour {
             if (IS_TRAINING_SESSION || (!IS_TRAINING_SESSION && taskCompleted))
             {
                 changeUserPosition();
-              //  if (!hasIdleState && !IS_ART_FEEDBACK) currentMovementLabel = MovementStateMachine.REST;
+                if (!hasIdleState && !IS_ART_FEEDBACK) currentMovementLabel = MovementStateMachine.REST;
             }
             resetVRTeleporter();
         }
@@ -463,7 +480,7 @@ public class PlayerMovementView : MonoBehaviour {
     IEnumerator TurnBCIOff(float seconds)
     {
         movementStateMachine.isBCIOn = false;
-        logMarkers(BCI_PAUSED);
+        //logMarkers(BCI_PAUSED);
         if (!IS_ART_FEEDBACK) classificationStopWatch.Reset();
         yield return new WaitForSeconds(seconds);
         movementStateMachine.isBCIOn = true;

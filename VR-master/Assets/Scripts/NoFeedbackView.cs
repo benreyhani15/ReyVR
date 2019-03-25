@@ -60,6 +60,7 @@ public class NoFeedbackView : MonoBehaviour {
             }
 
             stateMachine.updateExternalBuffers();
+            stateMachine.sendMarkers();
         }
 
         updateStopUI();

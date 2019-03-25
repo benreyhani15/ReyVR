@@ -67,7 +67,7 @@ public class NoFeedbackStateMachine
             taskController.taskCount == Constants.NUMBER_OF_CLASSES * Constants.TRIALS_PER_CLASS_PER_SESSION)
         {
             // Session is over
-            logger.logMarkers(END_OF_TRIAL, stopWatch.ElapsedMilliseconds.ToString());
+            logMarkers(END_OF_TRIAL);
 
             //stopWatch.Reset();
             isTrialDone = true;
@@ -91,7 +91,7 @@ public class NoFeedbackStateMachine
             ui.arrow.SetActive(false);
             ui.relax.SetActive(false);
             ui.cross.SetActive(false);
-            logger.logMarkers(START_OF_REST_TASK, stopWatch.ElapsedMilliseconds.ToString());
+            logMarkers(START_OF_REST_TASK);
             UnityEngine.Debug.Log("Blank Screen");
         }
         else if (currentTrialState == TrialState.Icon)
@@ -99,7 +99,7 @@ public class NoFeedbackStateMachine
             TaskController.TrialTask task = taskController.generateTaskRandomly();
             ui.cross.SetActive(false);
             ui.setTaskIcon(task);
-            logger.logMarkers(((int)task) + 1, stopWatch.ElapsedMilliseconds.ToString());
+            logMarkers(((int)task) + 1);
             UnityEngine.Debug.Log(task.ToString());
         }
         else
@@ -107,7 +107,7 @@ public class NoFeedbackStateMachine
             ui.arrow.SetActive(false);
             ui.relax.SetActive(false);
             ui.cross.SetActive(true);
-            logger.logMarkers(START_OF_RUN, stopWatch.ElapsedMilliseconds.ToString());
+            logMarkers(START_OF_RUN);
             UnityEngine.Debug.Log("Cross");
         }
     }
@@ -117,7 +117,7 @@ public class NoFeedbackStateMachine
         sessionStarted = true;
         stopWatch = new Stopwatch();
         stopWatch.Start();
-        logger.logMarkers(START_OF_TRIAL, "0");
+        logMarkers(START_OF_TRIAL);
         oculusMovementDetector.startDetector();
     }
 
@@ -162,8 +162,8 @@ public class NoFeedbackStateMachine
         if (newValue != isOculusExcessivelyMoving)
         {
             isOculusExcessivelyMoving = newValue;
-            logger.logMarkers(isOculusExcessivelyMoving ? PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON : PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_OFF
-              , stopWatch.ElapsedMilliseconds.ToString());
+            if (isOculusExcessivelyMoving) logMarkers(PlayerMovementView.EXCESSIVE_OCULUS_MOVEMENT_TURNED_ON);
+         
         }
     }
 
@@ -176,6 +176,12 @@ public class NoFeedbackStateMachine
         if (sessionStarted) {
             logger.sendMarkers(stopWatch.ElapsedMilliseconds.ToString());
         }
+    }
+
+    public void logMarkers(int marker)
+    {
+        logger.logMarkers(marker, stopWatch.ElapsedMilliseconds.ToString());
+        logger.queueMarkers(marker);
     }
 }
  
