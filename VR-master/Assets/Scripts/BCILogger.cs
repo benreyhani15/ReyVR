@@ -11,6 +11,7 @@ public class BCILogger
     private bool useOneFile;
     private String upFolderName;
     private String classificationResultFile;
+	private String labelsFile;
     private bool feedbackSession;
 
     // For parallel port writing
@@ -51,13 +52,14 @@ public class BCILogger
         feedbackSession = isForFeedbackSession;
         if (isForFeedbackSession) {
             classificationResultFile = "Logs/" + pathFromApplicationDirectory + "/classification_results_" + date + "_" + sessionType + "_" + trialNumber.ToString() + ".txt";
-        }
+			labelsFile = "Logs/" + pathFromApplicationDirectory + "/labels.txt";
+		}
         markerQueue = new Queue<int>();
         checkValidParallelPort();
     }
 
     public void logMarkers(int marker, String timeFromStartMS) {
-        UnityEngine.Debug.LogWarning("Logging markers: " + marker + "@: " + timeFromStartMS);
+        //UnityEngine.Debug.LogWarning("Logging markers: " + marker + "@: " + timeFromStartMS);
         appendToTextFile(marker.ToString(), timeFromStartMS);
     }
 
@@ -78,6 +80,11 @@ public class BCILogger
         using (StreamWriter sw = new StreamWriter(classificationResultFile, true))
         {
             sw.WriteLine(trueLabel +  "," + timeMS);
+        }
+		
+		using (StreamWriter sw = new StreamWriter(labelsFile, true))
+        {
+            sw.WriteLine(trueLabel);
         }
     }
 

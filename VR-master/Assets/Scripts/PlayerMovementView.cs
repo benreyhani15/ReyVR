@@ -7,7 +7,7 @@ using System.Diagnostics;
 public class PlayerMovementView : MonoBehaviour {
 
     // TODO: CHANGE THESE CONSTANTS!!!!
-    private static float MAX_COMPLETION_TIME = 10000000000000000000; // 5 mins, max time user can attempt to free-roam
+    private static float MAX_COMPLETION_TIME = 25f*60f; // 20 mins, max time user can attempt to free-roam
     private static float METRES_PER_TELEPORT = 5f;
 
     public static float MAX_HAND_TASK_TIME = 5f;
@@ -15,9 +15,9 @@ public class PlayerMovementView : MonoBehaviour {
     public static float MAX_REST_TASK_TIME = 5f;
 
     // Amount of time to turn off BCI at beggining of new task
-    public static float BCI_OFF_TIME_BETWEEN_STATE_CHANGE = 2f;
+    public static float BCI_OFF_TIME_BETWEEN_STATE_CHANGE = 1f;
     public static float BCI_OFF_TIME_AFTER_OCULUS_MOVEMENT = 0f;
-    public static float INITIAL_BCI_OFF_TIME = 2f;
+    public static float INITIAL_BCI_OFF_TIME = 1f;
 
     private float currentTaskElapsedTime;
     private float currentTaskMaxTime;
@@ -27,10 +27,12 @@ public class PlayerMovementView : MonoBehaviour {
     public GameObject restSlider;
 
     public static float REST_BAR_SPEED = 1f; 
-    public static float ROTATION_LINE_SPEED = 9f; // 20 degree/s
-    public static float STRENGTH_SPEED = 0.5f;
+    public static float ART_ROTATION_LINE_SPEED = 90f/6f; // 90 degree/10s
+    public static float ART_STRENGTH_SPEED = 5f/6f; // 5m/6s
+	public static float FB_STRENGTH_SPEED = 5f/6f; // 5m/4s
+	public static float FB_ROTATION_LINE_SPEED = 90f/6f; // 90 degree/8s
 
-    public static float REST_BAR_CHECKPOINT = 5f; // 
+    public static float REST_BAR_CHECKPOINT = 5f; // 5m
     public static float ROTATION_ANGLE_CHECKPOINT = 90f; // 90 degrees
     public static float STRENGTH_DISTANCE_CHECKPOINT = 5f;
 
@@ -128,7 +130,7 @@ public class PlayerMovementView : MonoBehaviour {
         {
             if (Input.GetKeyDown(KeyCode.Return))
             {
-                logger.logMarkers(START_OF_TRIAL, "0");
+                logMarkers(START_OF_TRIAL);
                 movementStateMachine = new MovementStateMachine(this, eyeCameraTransform);
                 totalStopWatch = new Stopwatch();
                 totalStopWatch.Start();
@@ -206,7 +208,7 @@ public class PlayerMovementView : MonoBehaviour {
             {
                 logMarkers(END_OF_TRIAL);
             }
-            temporarilyTurnBCIOff(MAX_COMPLETION_TIME);
+            //temporarilyTurnBCIOff(MAX_COMPLETION_TIME);
             vrTeleporter.ToggleDisplay(false);
             isDone = true;
             //movementStateMachine.networker.stopListening();
@@ -451,7 +453,8 @@ public class PlayerMovementView : MonoBehaviour {
 
     private void moveForward(float deltaTime)
     {      
-        float newStrength = vrTeleporter.strength + (deltaTime * STRENGTH_SPEED);
+		float strengthSpeed = IS_ART_FEEDBACK ? ART_STRENGTH_SPEED : FB_STRENGTH_SPEED;
+        float newStrength = vrTeleporter.strength + (deltaTime * strengthSpeed);
         float maxStrength = STRENGTH_DISTANCE_CHECKPOINT + originalVRTeleporterStrength;
         float newForwardStrength = Mathf.Min(newStrength, maxStrength);
         vrTeleporter.strength = newForwardStrength;
@@ -462,7 +465,8 @@ public class PlayerMovementView : MonoBehaviour {
         // deltaTime will be negative for Left
         float curAngle = rotationLine.transform.localEulerAngles.y;
         if (curAngle == 0f) curAngle = 360;
-        float newAngle = curAngle - (deltaTime * ROTATION_LINE_SPEED);
+		float rotationLineSpeed = IS_ART_FEEDBACK ? ART_ROTATION_LINE_SPEED : FB_ROTATION_LINE_SPEED;
+        float newAngle = curAngle - (deltaTime * rotationLineSpeed);
         newAngle = Mathf.Max(newAngle, 360-ROTATION_ANGLE_CHECKPOINT);
         //UnityEngine.Debug.Log("Moving line rotation to angle: " + newAngle);
         rotationLine.transform.localEulerAngles = new Vector3(originalEulerLineRotation.x, newAngle, originalEulerLineRotation.z);
@@ -471,7 +475,8 @@ public class PlayerMovementView : MonoBehaviour {
     private void moveArrowRight(float deltaTime)
     {
         // deltaTime will be negative for Left
-        float newAngle = rotationLine.transform.localEulerAngles.y + (deltaTime * ROTATION_LINE_SPEED);
+		float rotationLineSpeed = IS_ART_FEEDBACK ? ART_ROTATION_LINE_SPEED : FB_ROTATION_LINE_SPEED;
+        float newAngle = rotationLine.transform.localEulerAngles.y + (deltaTime * rotationLineSpeed);
         newAngle = Mathf.Min(newAngle, ROTATION_ANGLE_CHECKPOINT);
         //UnityEngine.Debug.Log("Moving line rotation to angle: " + newAngle);
         rotationLine.transform.localEulerAngles = new Vector3(originalEulerLineRotation.x, newAngle, originalEulerLineRotation.z);
@@ -486,7 +491,7 @@ public class PlayerMovementView : MonoBehaviour {
         movementStateMachine.isBCIOn = true;
         if (IS_ART_FEEDBACK) movementStateMachine.updateArtFBStateMachine(true);
         else classificationStopWatch.Start();
-        logMarkers(BCI_UNPAUSED);
+        if (!isDone) logMarkers(BCI_UNPAUSED);
     }
 
     public void temporarilyTurnBCIOff(float seconds)

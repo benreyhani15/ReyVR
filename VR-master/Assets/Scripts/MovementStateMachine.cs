@@ -74,7 +74,7 @@ public class MovementStateMachine {
 
     public void updateArtFBStateMachine(bool forceUpdate) {
         if (!isBCIOn) return;
-        if (view.taskCompleted) {
+        if (view.taskCompleted && artStopWatch.ElapsedMilliseconds >= 1000f) {
             view.logLabels(eegClassificationDecision);
             view.logMarkers(PlayerMovementView.END_OF_EPOCH);
             artStopWatch.Reset();
